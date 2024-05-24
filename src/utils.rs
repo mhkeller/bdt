@@ -4,17 +4,14 @@ use datafusion::arrow::datatypes::DataType;
 use datafusion::arrow::record_batch::RecordBatch;
 use datafusion::common::ScalarValue;
 use datafusion::prelude::{
-    AvroReadOptions, CsvReadOptions, DataFrame, NdJsonReadOptions, ParquetReadOptions,
+    CsvReadOptions, DataFrame,
     SessionContext,
 };
 use std::path::Path;
 
 pub fn file_format(filename: &str) -> Result<FileFormat, Error> {
     match file_ending(filename)?.as_str() {
-        "avro" => Ok(FileFormat::Avro),
         "csv" => Ok(FileFormat::Csv),
-        "json" => Ok(FileFormat::Json),
-        "parquet" | "parq" => Ok(FileFormat::Parquet),
         other => Err(Error::General(format!(
             "unsupported file extension '{}'",
             other
@@ -56,31 +53,9 @@ pub async fn register_table(
     filename: &str,
 ) -> Result<DataFrame, Error> {
     match file_format(filename)? {
-        FileFormat::Arrow => {
-            unimplemented!()
-        }
-        FileFormat::Avro => {
-            ctx.register_avro(table_name, filename, AvroReadOptions::default())
-                .await?
-        }
         FileFormat::Csv => {
             ctx.register_csv(table_name, filename, CsvReadOptions::default())
                 .await?
-        }
-        FileFormat::Json => {
-            ctx.register_json(table_name, filename, NdJsonReadOptions::default())
-                .await?
-        }
-        FileFormat::Parquet => {
-            ctx.register_parquet(
-                table_name,
-                filename,
-                ParquetReadOptions {
-                    file_extension: &file_ending(filename)?,
-                    ..Default::default()
-                },
-            )
-            .await?
         }
     }
     ctx.table(table_name).await.map_err(Error::from)
