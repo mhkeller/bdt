@@ -128,7 +128,7 @@ async fn execute_command(cmd: Command) -> Result<(), Error> {
         Command::Schema { filename } => {
             let filename = parse_filename(&filename)?;
             let _ = register_table(&ctx, "t", filename).await?;
-            let sql = "SELECT column_name, data_type, is_nullable \
+            let sql = "SELECT column_name, data_type \
                                 FROM information_schema.columns WHERE table_name = 't'";
             let df = ctx.sql(sql).await?;
             df.show().await?;
